@@ -4,6 +4,9 @@
 #include "SparkFunMPL3115A2.h"
 
 MPL3115A2 myPressure;
+uint32_t saw_tooth;
+uint8_t ramp_count;
+bool ramp_up;
 
 static const uint16_t SERVICE_ID = 0x1001;
 static const uint16_t LED_ATTRIBUTE_ID = 0x0001;
@@ -28,6 +31,9 @@ static uint8_t buffer[GET_PAYLOAD_BUFFER_SIZE(4)];
 void setup() {
   Wire.begin();        // Join i2c bus
   Serial.begin(9600);
+  saw_tooth = 5280;
+  ramp_count = 0;
+  ramp_up = true;
   myPressure.begin(); // Get sensor online
   myPressure.setModeAltimeter(); // Measure altitude above sea level in meters
   myPressure.setOversampleRate(128); // Set Oversample to the recommended 128
@@ -65,8 +71,21 @@ void handle_altitude_request(RequestType type, size_t length) {
   Serial.println("I was asked to provide altitude");
   const float altitude = myPressure.readAltitudeFt();
   const int i = (int) altitude;
-  Serial.print(altitude);
-  ArduinoPebbleSerial::write(true, (uint8_t *)&i, sizeof(i));
+  if (ramp_up == true){
+    ramp_count = ramp_count + 1;
+    saw_tooth = saw_tooth + 1;
+    if (ramp_count == 10){
+      ramp_up = false;  
+    }
+  } else {
+    ramp_count = ramp_count - 1;
+    saw_tooth = saw_tooth - 1;
+    if (ramp_count == 0 ){
+      ramp_up = true;
+    }
+  }
+  Serial.println(saw_tooth);
+  ArduinoPebbleSerial::write(true, (uint8_t *)&saw_tooth, sizeof(saw_tooth));
 }
 
 
@@ -76,7 +95,6 @@ void handle_temperature_request(RequestType type, size_t length) {
     return;
   }
   const float temperature = myPressure.readTempF();
-  //const float temperature = 8.0;
   const int i = (int) temperature;
   ArduinoPebbleSerial::write(true, (uint8_t *)&i, sizeof(i));
 }

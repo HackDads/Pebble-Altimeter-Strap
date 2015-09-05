@@ -10,6 +10,13 @@ static const uint16_t LED_ATTRIBUTE_ID = 0x0001;
 static const size_t LED_ATTRIBUTE_LENGTH = 1;
 static const uint16_t UPTIME_ATTRIBUTE_ID = 0x0002;
 static const size_t UPTIME_ATTRIBUTE_LENGTH = 4;
+//sensor attributes
+static const uint16_t ALTITUDE_ATTRIBUTE_ID = 0x0003;
+static const size_t ALTITUDE_ATTRIBUTE_LENGTH = 4;
+static const uint16_t TEMPERATURE_ATTRIBUTE_ID = 0x0004;
+static const size_t TEMPERATURE_ATTRIBUTE_LENGTH = 4;
+
+
 
 static const uint16_t SERVICES[] = {SERVICE_ID};
 static const uint8_t NUM_SERVICES = 1;
@@ -23,7 +30,7 @@ void setup() {
   Serial.begin(9600);
   myPressure.begin(); // Get sensor online
   myPressure.setModeAltimeter(); // Measure altitude above sea level in meters
-  myPressure.setOversampleRate(7); // Set Oversample to the recommended 128
+  myPressure.setOversampleRate(128); // Set Oversample to the recommended 128
   myPressure.enableEventFlags(); // Enable all three pressure and temp event flags
   
   pinMode(LED_BUILTIN, OUTPUT);
@@ -47,6 +54,18 @@ void handle_uptime_request(RequestType type, size_t length) {
   // write back the current uptime
   const uint32_t uptime = millis() / 1000;
   ArduinoPebbleSerial::write(true, (uint8_t *)&uptime, sizeof(uptime));
+}
+
+
+void handle_altitude_request(RequestType type, size_t length) {
+  if (type != RequestTypeRead) {
+    // unexpected request type
+    return;
+  }
+  // write back the current uptime
+  //const uint32_t uptime = millis() / 1000;
+  const float altitude = myPressure.readAltitudeFt();
+  ArduinoPebbleSerial::write(true, (uint8_t *)&altitude, sizeof(altitude));
 }
 
 void handle_led_request(RequestType type, size_t length) {
@@ -86,6 +105,9 @@ void loop() {
       switch (attribute_id) {
         case UPTIME_ATTRIBUTE_ID:
           handle_uptime_request(type, length);
+          break;
+        case ALTITUDE_ATTRIBUTE_ID:
+          handle_altitude_request(type, length);
           break;
         case LED_ATTRIBUTE_ID:
           handle_led_request(type, length);

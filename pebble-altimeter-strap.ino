@@ -34,7 +34,7 @@ void setup() {
   myPressure.enableEventFlags(); // Enable all three pressure and temp event flags
   
   pinMode(LED_BUILTIN, OUTPUT);
-#if defined(__MK20DX256__) || defined(__MK20DX128__)
+#if defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__)
   // Teensy 3.0/3.1 uses hardware serial mode (pins 0/1) with RX/TX shorted together
   ArduinoPebbleSerial::begin_hardware(buffer, sizeof(buffer), Baud57600, SERVICES, NUM_SERVICES);
 #elif defined(__AVR_ATmega32U4__)
@@ -77,7 +77,8 @@ void handle_temperature_request(RequestType type, size_t length) {
   }
   const float temperature = myPressure.readTempF();
   //const float temperature = 8.0;
-  ArduinoPebbleSerial::write(true, (uint8_t *)&temperature, sizeof(temperature));
+  const int i = (int) temperature;
+  ArduinoPebbleSerial::write(true, (uint8_t *)&i, sizeof(i));
 }
 
 void handle_led_request(RequestType type, size_t length) {

@@ -62,10 +62,22 @@ void handle_altitude_request(RequestType type, size_t length) {
     // unexpected request type
     return;
   }
-  // write back the current uptime
-  //const uint32_t uptime = millis() / 1000;
+  Serial.println("I was asked to provide altitude");
   const float altitude = myPressure.readAltitudeFt();
-  ArduinoPebbleSerial::write(true, (uint8_t *)&altitude, sizeof(altitude));
+  const int i = (int) altitude;
+  Serial.print(altitude);
+  ArduinoPebbleSerial::write(true, (uint8_t *)&i, sizeof(i));
+}
+
+
+void handle_temperature_request(RequestType type, size_t length) {
+  if (type != RequestTypeRead) {
+    // unexpected request type
+    return;
+  }
+  const float temperature = myPressure.readTempF();
+  //const float temperature = 8.0;
+  ArduinoPebbleSerial::write(true, (uint8_t *)&temperature, sizeof(temperature));
 }
 
 void handle_led_request(RequestType type, size_t length) {
@@ -83,9 +95,9 @@ void handle_led_request(RequestType type, size_t length) {
 }
 
 void loop() {
-  float altitude = myPressure.readAltitudeFt();
-  Serial.print(" Altitude(ft):");
-  Serial.print(altitude, 2);
+  //float altitude = myPressure.readAltitudeFt();
+  //Serial.print(" Altitude(ft):");
+  //Serial.print(altitude, 2);
   if (ArduinoPebbleSerial::is_connected()) {
     static uint32_t last_notify_time = 0;
     const uint32_t current_time = millis() / 1000;
@@ -108,6 +120,9 @@ void loop() {
           break;
         case ALTITUDE_ATTRIBUTE_ID:
           handle_altitude_request(type, length);
+          break;
+        case TEMPERATURE_ATTRIBUTE_ID:
+          handle_temperature_request(type, length);
           break;
         case LED_ATTRIBUTE_ID:
           handle_led_request(type, length);

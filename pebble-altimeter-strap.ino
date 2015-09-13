@@ -29,15 +29,15 @@ static uint8_t buffer[GET_PAYLOAD_BUFFER_SIZE(4)];
 
 
 void setup() {
-  Wire.begin();        // Join i2c bus
+  //Wire.begin();        // Join i2c bus
   Serial.begin(9600);
-  saw_tooth = 5280;
+  saw_tooth = 5000;
   ramp_count = 0;
   ramp_up = true;
-  myPressure.begin(); // Get sensor online
-  myPressure.setModeAltimeter(); // Measure altitude above sea level in meters
-  myPressure.setOversampleRate(128); // Set Oversample to the recommended 128
-  myPressure.enableEventFlags(); // Enable all three pressure and temp event flags
+  //myPressure.begin(); // Get sensor online
+  //myPressure.setModeAltimeter(); // Measure altitude above sea level in meters
+  //myPressure.setOversampleRate(128); // Set Oversample to the recommended 128
+  //myPressure.enableEventFlags(); // Enable all three pressure and temp event flags
   
   pinMode(LED_BUILTIN, OUTPUT);
 #if defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__)
@@ -69,17 +69,17 @@ void handle_altitude_request(RequestType type, size_t length) {
     return;
   }
   Serial.println("I was asked to provide altitude");
-  const float altitude = myPressure.readAltitudeFt();
-  const int i = (int) altitude;
+  //const float altitude = myPressure.readAltitudeFt();
+  //const int i = (int) altitude;
   if (ramp_up == true){
     ramp_count = ramp_count + 1;
-    saw_tooth = saw_tooth + 1;
-    if (ramp_count == 10){
+    saw_tooth = saw_tooth + 500;
+    if (ramp_count == 14){
       ramp_up = false;  
     }
   } else {
     ramp_count = ramp_count - 1;
-    saw_tooth = saw_tooth - 1;
+    saw_tooth = saw_tooth - 500;
     if (ramp_count == 0 ){
       ramp_up = true;
     }
@@ -94,9 +94,9 @@ void handle_temperature_request(RequestType type, size_t length) {
     // unexpected request type
     return;
   }
-  const float temperature = myPressure.readTempF();
-  const int i = (int) temperature;
-  ArduinoPebbleSerial::write(true, (uint8_t *)&i, sizeof(i));
+  //const float temperature = myPressure.readTempF();
+  //const int i = (int) temperature;
+  //ArduinoPebbleSerial::write(true, (uint8_t *)&i, sizeof(i));
 }
 
 void handle_led_request(RequestType type, size_t length) {
@@ -115,7 +115,7 @@ void handle_led_request(RequestType type, size_t length) {
 
 void loop() {
   //float altitude = myPressure.readAltitudeFt();
-  //Serial.print(" Altitude(ft):");
+  Serial.print(" Altitude(ft):");
   //Serial.print(altitude, 2);
   if (ArduinoPebbleSerial::is_connected()) {
     static uint32_t last_notify_time = 0;
